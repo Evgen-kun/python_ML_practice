@@ -16,10 +16,29 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 
 
+def feature_analysis(data):
+    pd.set_option('display.max_columns', None)
+    print("Вывести первичный анализ признаков?",
+          " * 1 - Да",
+          " * 2 - Нет", sep='\n')
+    ans = int(input())
+    if ans == 2:
+        return
+    # Первичный анализ признаков
+    print(data.describe())
+    print(data.describe())
+
+
 def visual_feature_analysis(data):
+    print("Вывести визуальный анализ признаков?",
+          " * 1 - Да",
+          " * 2 - Нет", sep='\n')
+    ans = int(input())
+    if ans == 2:
+        return
     while True:
         print("Выберите для первичного визуального анализа:",
-              " * 0 - EXIT"
+              " * 0 - EXIT",
               " * 1 - Age",
               " * 2 - fnlwgt",
               " * 3 - Education_Num",
@@ -41,6 +60,24 @@ def visual_feature_analysis(data):
             break
         plt.hist(data[constants.ALL_FEATURES_COLLECTION.get(ans)])
         plt.show()
+
+
+def visual_correlation_matrix(data):
+    print("Вывести Корелляционную матрицу?",
+          " * 1 - Да",
+          " * 2 - Нет", sep='\n')
+    ans = int(input())
+    if ans == 2:
+        return
+    f = plt.figure(figsize=(19, 15))
+    plt.matshow(data.corr(), fignum=f.number)
+    plt.xticks(range(data.select_dtypes(['number']).shape[1]), data.select_dtypes(['number']).columns, fontsize=14,
+               rotation=45)
+    plt.yticks(range(data.select_dtypes(['number']).shape[1]), data.select_dtypes(['number']).columns, fontsize=14)
+    cb = plt.colorbar()
+    cb.ax.tick_params(labelsize=14)
+    plt.title('Correlation Matrix', fontsize=16)
+    plt.show()
 
 
 # Используем метрику accuracy_score для вычисления точности, которая показывает долю правильных прогнозов.
@@ -109,14 +146,13 @@ def load_from_csv():
     # adult_modified = adult_train.set_index('fnlwgt')
     encode_categorical_features(adult_train)
     encode_categorical_features(adult_test)
-    pd.set_option('display.max_columns', None)
     print(adult_train.head())
-    print(adult_test.head())
-    # Первичный анализ признаков
-    print(adult_train.describe())
-    print(adult_test.describe())
+    print(adult_train.head())
+    feature_analysis(adult_train)
     # Первичный визуальный анализ признаков
     visual_feature_analysis(adult_train)
+    # Закономерности, особенности данных
+    visual_correlation_matrix(adult_train)
     return [adult_train, adult_test]
 
 
@@ -155,8 +191,9 @@ def print_hi(name):
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     print_hi('PyCharm')
+    encode_data = load_from_csv()
     while True:
-        ml(load_from_csv())
+        ml(encode_data)
         print("Продолжить?", " * 1 - Да", " * Other number - Нет", sep='\n')
         if int(input()) != 1:
             break
