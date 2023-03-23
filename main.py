@@ -16,26 +16,27 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 
 
-def feature_analysis(data):
+adult_train = pd
+adult_test = pd
+adult_train_modified = pd
+adult_test_modified = pd
+
+
+def feature_analysis():
     pd.set_option('display.max_columns', None)
-    print("Вывести первичный анализ признаков?",
-          " * 1 - Да",
-          " * 2 - Нет", sep='\n')
-    ans = int(input())
-    if ans == 2:
-        return
+    # print("Вывести первичный анализ признаков?",
+    #       " * 1 - Да",
+    #       " * 2 - Нет", sep='\n')
+    # ans = int(input())
+    # if ans == 2:
+    #     return
     # Первичный анализ признаков
-    print(data.describe())
-    print(data.describe())
+    print(adult_train.describe())
+    print(adult_train.describe())
 
 
-def visual_feature_analysis(data):
-    print("Вывести визуальный анализ признаков?",
-          " * 1 - Да",
-          " * 2 - Нет", sep='\n')
-    ans = int(input())
-    if ans == 2:
-        return
+# Первичный визуальный анализ признаков
+def visual_feature_analysis():
     while True:
         print("Выберите для первичного визуального анализа:",
               " * 0 - EXIT",
@@ -58,22 +59,18 @@ def visual_feature_analysis(data):
         ans = int(input())
         if (ans > 15) or (ans < 1):
             break
-        plt.hist(data[constants.ALL_FEATURES_COLLECTION.get(ans)])
+        plt.hist(adult_train[constants.ALL_FEATURES_COLLECTION.get(ans)])
         plt.show()
 
 
-def visual_correlation_matrix(data):
-    print("Вывести Корелляционную матрицу?",
-          " * 1 - Да",
-          " * 2 - Нет", sep='\n')
-    ans = int(input())
-    if ans == 2:
-        return
+# Закономерности, особенности данных
+def visual_correlation_matrix():
     f = plt.figure(figsize=(19, 15))
-    plt.matshow(data.corr(), fignum=f.number)
-    plt.xticks(range(data.select_dtypes(['number']).shape[1]), data.select_dtypes(['number']).columns, fontsize=14,
-               rotation=45)
-    plt.yticks(range(data.select_dtypes(['number']).shape[1]), data.select_dtypes(['number']).columns, fontsize=14)
+    plt.matshow(adult_train.corr(), fignum=f.number)
+    plt.xticks(range(adult_train.select_dtypes(['number']).shape[1]), adult_train.select_dtypes(['number']).columns,
+               fontsize=14, rotation=45)
+    plt.yticks(range(adult_train.select_dtypes(['number']).shape[1]), adult_train.select_dtypes(['number']).columns,
+               fontsize=14)
     cb = plt.colorbar()
     cb.ax.tick_params(labelsize=14)
     plt.title('Correlation Matrix', fontsize=16)
@@ -142,38 +139,6 @@ def all_methods(data):
     k_nearest_neighbors(data)
 
 
-switcher = {
-    1: logistic_regression,
-    2: decision_tree,
-    3: support_vector_machines,
-    4: k_nearest_neighbors,
-    0: all_methods
-}
-
-
-def encode_categorical_features(data):
-    for feature in constants.CATEGORICAL_FEATURES:
-        data[feature] = pd.Categorical(data[feature])
-        data[feature] = data[feature].cat.codes
-
-
-def load_from_csv():
-    # Загрузим данные и разделим их на обучающую и тестовую выборки:
-    adult_train = pd.read_csv('lab/11/adult_train.csv', sep=';')
-    adult_test = pd.read_csv('lab/11/adult_test.csv', sep=';', skiprows=[1])
-    # adult_modified = adult_train.set_index('fnlwgt')
-    encode_categorical_features(adult_train)
-    encode_categorical_features(adult_test)
-    print(adult_train.head())
-    print(adult_train.head())
-    feature_analysis(adult_train)
-    # Первичный визуальный анализ признаков
-    visual_feature_analysis(adult_train)
-    # Закономерности, особенности данных
-    visual_correlation_matrix(adult_train)
-    return [adult_train, adult_test]
-
-
 def ml(data_from_csv):
     x_data, y_data = data_from_csv
     # x = x_data.drop('Target', axis=1)
@@ -202,20 +167,71 @@ def ml(data_from_csv):
           " * 4 - k-ближайших соседей",
           " * 0 - Все сразу", sep='\n')
 
-    switcher.get(int(input()))(data)
+    method_switcher.get(int(input()))(data)
+
+
+method_switcher = {
+    1: logistic_regression,
+    2: decision_tree,
+    3: support_vector_machines,
+    4: k_nearest_neighbors,
+    0: all_methods
+}
+
+
+analysis_switcher = {
+    1: feature_analysis,
+    2: visual_feature_analysis,
+    3: visual_correlation_matrix,
+}
+
+
+def encode_categorical_features(data):
+    for feature in constants.CATEGORICAL_FEATURES:
+        data[feature] = pd.Categorical(data[feature])
+        data[feature] = data[feature].cat.codes
+
+
+def load_from_csv():
+    # Загрузим данные и разделим их на обучающую и тестовую выборки:
+    global adult_train, adult_train_modified, adult_test, adult_test_modified
+    adult_train = pd.read_csv('lab/11/adult_train.csv', sep=';')
+    adult_train_modified = pd.read_csv('lab/11/adult_train.csv', sep=';')
+    adult_test = pd.read_csv('lab/11/adult_test.csv', sep=';', skiprows=[1])
+    adult_test_modified = pd.read_csv('lab/11/adult_test.csv', sep=';', skiprows=[1])
+    # adult_modified = adult_train.set_index('fnlwgt')
+    encode_categorical_features(adult_train)
+    encode_categorical_features(adult_test)
+    print(adult_train.head())
+    print(adult_train.head())
+    return [adult_train, adult_test]
 
 
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+    print(f'Hi, {name}!')  # Press Ctrl+F8 to toggle the breakpoint.
+
+
+def main_menu(data):
+    print_hi('PyCharm')
+    while True:
+        print("Выберите действие: ",
+              " * 1 - Первичный анализ признаков",
+              " * 2 - Первичный визуальный анализ признаков",
+              " * 3 - Вывести корелляционную матрицу",
+              " * 4 - Выбрать алгоритм машинного обучения",
+              " * 5 - Выйти",
+              sep='\n')
+        ans = int(input())
+        if ans < 1 or ans > 4:
+            print("Завершение программы... ОК")
+            return
+        if ans == 4:
+            ml(data)
+            continue
+        analysis_switcher.get(ans)()
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
-    encode_data = load_from_csv()
-    while True:
-        ml(encode_data)
-        print("Продолжить?", " * 1 - Да", " * Other number - Нет", sep='\n')
-        if int(input()) != 1:
-            break
+    main_menu(load_from_csv())
