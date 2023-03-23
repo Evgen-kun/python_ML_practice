@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import constants
 from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
@@ -80,10 +80,25 @@ def visual_correlation_matrix(data):
     plt.show()
 
 
+def cross_validation(data):
+    model, x, y, method = data
+    print(f'Провести кросс-валидацию для метода "{method}"?',
+          " * 1 - Да",
+          " * 2 - Нет", sep='\n')
+    ans = int(input())
+    if ans == 2:
+        return
+    scores = cross_val_score(model, x, y, cv=5)  # 5-кратная кросс-валидация
+    print('Оценки качества: ', scores)
+    print('Среднее: ', scores.mean())
+    print('Стандартное отклонение: ', scores.std())
+
+
 # Используем метрику accuracy_score для вычисления точности, которая показывает долю правильных прогнозов.
 def logistic_regression(data):
     x_train, x_test, y_train, y_test = data
     lr = LogisticRegression()
+    cross_validation([lr, x_train, y_train, "логистическая регрессия"])
     lr.fit(x_train, y_train)
     y_pred_lr = lr.predict(x_test)
     accuracy_lr = accuracy_score(y_test, y_pred_lr)
@@ -93,6 +108,7 @@ def logistic_regression(data):
 def decision_tree(data):
     x_train, x_test, y_train, y_test = data
     dt = DecisionTreeClassifier()
+    cross_validation([dt, x_train, y_train, "дерево решений"])
     dt.fit(x_train, y_train)
     y_pred_dt = dt.predict(x_test)
     accuracy_dt = accuracy_score(y_test, y_pred_dt)
@@ -102,6 +118,7 @@ def decision_tree(data):
 def support_vector_machines(data):
     x_train, x_test, y_train, y_test = data
     svm = SVC()
+    cross_validation([svm, x_train, y_train, "опорных векторов"])
     svm.fit(x_train, y_train)
     y_pred_svm = svm.predict(x_test)
     accuracy_svm = accuracy_score(y_test, y_pred_svm)
@@ -111,6 +128,7 @@ def support_vector_machines(data):
 def k_nearest_neighbors(data):
     x_train, x_test, y_train, y_test = data
     knn = KNeighborsClassifier()
+    cross_validation([knn, x_train, y_train, "k-ближайших соседей"])
     knn.fit(x_train, y_train)
     y_pred_knn = knn.predict(x_test)
     accuracy_knn = accuracy_score(y_test, y_pred_knn)
@@ -158,9 +176,13 @@ def load_from_csv():
 
 def ml(data_from_csv):
     x_data, y_data = data_from_csv
-    x = x_data.drop('Target', axis=1)
-    y = x_data['Target']
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+    # x = x_data.drop('Target', axis=1)
+    # y = x_data['Target']
+    # x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+    x_train = x_data.drop('Target', axis=1)  # признаки для обучения модели
+    y_train = x_data['Target']  # метки для обучения модели
+    x_test = y_data.drop('Target', axis=1)  # признаки для тестирования модел
+    y_test = y_data['Target']  # метки для тестирования модел
 
     # Предобработка данных. В этом примере мы используем стандартизацию данных:
     scaler = StandardScaler()
