@@ -31,45 +31,32 @@ def feature_analysis():
     # if ans == 2:
     #     return
     # Первичный анализ признаков
-    print(adult_train.describe())
-    print(adult_train.describe())
+    print(adult_train_modified.describe())
+    print(adult_train_modified.describe())
 
 
 # Первичный визуальный анализ признаков
 def visual_feature_analysis():
+    global adult_train_modified, adult_test_modified
     while True:
-        print("Выберите для первичного визуального анализа:",
-              " * 0 - EXIT",
-              " * 1 - Age",
-              " * 2 - fnlwgt",
-              " * 3 - Education_Num",
-              " * 4 - Capital_Gain",
-              " * 5 - Capital_Loss",
-              " * 6 - Hours_per_week",
-              " * 7 - Target",
-              " * 8 - Workclass",
-              " * 9 - Education",
-              " * 10 - Martial_Status",
-              " * 11 - Occupation",
-              " * 12 - Relationship",
-              " * 13 - Race",
-              " * 14 - Sex",
-              " * 15 - Country",
-              sep='\n')
+        print("Выберите для первичного визуального анализа:")
+        for col in adult_train_modified.columns:
+            key = list(constants.ALL_FEATURES_COLLECTION.keys())[list(constants.ALL_FEATURES_COLLECTION.values()).index(col)]
+            print(f" * {key} - {col}")
         ans = int(input())
         if (ans > 15) or (ans < 1):
             break
-        plt.hist(adult_train[constants.ALL_FEATURES_COLLECTION.get(ans)])
+        plt.hist(adult_train_modified[constants.ALL_FEATURES_COLLECTION.get(ans)])
         plt.show()
 
 
 # Закономерности, особенности данных
 def visual_correlation_matrix():
     f = plt.figure(figsize=(19, 15))
-    plt.matshow(adult_train.corr(), fignum=f.number)
-    plt.xticks(range(adult_train.select_dtypes(['number']).shape[1]), adult_train.select_dtypes(['number']).columns,
+    plt.matshow(adult_train_modified.corr(), fignum=f.number)
+    plt.xticks(range(adult_train_modified.select_dtypes(['number']).shape[1]), adult_train_modified.select_dtypes(['number']).columns,
                fontsize=14, rotation=45)
-    plt.yticks(range(adult_train.select_dtypes(['number']).shape[1]), adult_train.select_dtypes(['number']).columns,
+    plt.yticks(range(adult_train_modified.select_dtypes(['number']).shape[1]), adult_train_modified.select_dtypes(['number']).columns,
                fontsize=14)
     cb = plt.colorbar()
     cb.ax.tick_params(labelsize=14)
@@ -170,6 +157,38 @@ def ml(data_from_csv):
     method_switcher.get(int(input()))(data)
 
 
+def encode_categorical_features(data):
+    for feature in constants.CATEGORICAL_FEATURES:
+        data[feature] = pd.Categorical(data[feature])
+        data[feature] = data[feature].cat.codes
+
+
+def feature_filter():
+    print("Введите через запятую номера признаков, которые нужно убрать")
+    global adult_train_modified, adult_test_modified
+    print("Текущие признаки:")
+    print(" * 0 - Отчистить фильтр")
+    for col in adult_train_modified.columns:
+        key = list(constants.ALL_FEATURES_COLLECTION.keys())[list(constants.ALL_FEATURES_COLLECTION.values()).index(col)]
+        print(f" * {key} - {col}")
+    print(" * 'q' - Выйти")
+    ans = str(input()).split(',')
+    if ans[0] == 'q':
+        return
+    if int(ans[0]) == 0:
+        feature_filter_reset()
+        return
+    for feature_num in ans:
+        adult_train_modified = adult_train_modified.drop(constants.ALL_FEATURES_COLLECTION.get(int(feature_num)), axis=1)
+        adult_test_modified = adult_test_modified.drop(constants.ALL_FEATURES_COLLECTION.get(int(feature_num)), axis=1)
+
+
+def feature_filter_reset():
+    global adult_train, adult_test, adult_train_modified, adult_test_modified
+    adult_train_modified = adult_train
+    adult_test_modified = adult_test
+
+
 method_switcher = {
     1: logistic_regression,
     2: decision_tree,
@@ -183,13 +202,8 @@ analysis_switcher = {
     1: feature_analysis,
     2: visual_feature_analysis,
     3: visual_correlation_matrix,
+    4: feature_filter
 }
-
-
-def encode_categorical_features(data):
-    for feature in constants.CATEGORICAL_FEATURES:
-        data[feature] = pd.Categorical(data[feature])
-        data[feature] = data[feature].cat.codes
 
 
 def load_from_csv():
@@ -202,9 +216,11 @@ def load_from_csv():
     # adult_modified = adult_train.set_index('fnlwgt')
     encode_categorical_features(adult_train)
     encode_categorical_features(adult_test)
+    encode_categorical_features(adult_train_modified)
+    encode_categorical_features(adult_test_modified)
     print(adult_train.head())
     print(adult_train.head())
-    return [adult_train, adult_test]
+    return [adult_train_modified, adult_test_modified]
 
 
 def print_hi(name):
@@ -219,14 +235,15 @@ def main_menu(data):
               " * 1 - Первичный анализ признаков",
               " * 2 - Первичный визуальный анализ признаков",
               " * 3 - Вывести корелляционную матрицу",
-              " * 4 - Выбрать алгоритм машинного обучения",
-              " * 5 - Выйти",
+              " * 4 - Провести подбор параметров",
+              " * 5 - Выбрать алгоритм машинного обучения",
+              " * 6 - Выйти",
               sep='\n')
         ans = int(input())
-        if ans < 1 or ans > 4:
+        if ans < 1 or ans > 5:
             print("Завершение программы... ОК")
             return
-        if ans == 4:
+        if ans == 5:
             ml(data)
             continue
         analysis_switcher.get(ans)()
